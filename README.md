@@ -243,6 +243,47 @@ For Server/Data Center deployments, use direct variable passing:
 > [!NOTE]
 > Set `CONFLUENCE_SSL_VERIFY` and `JIRA_SSL_VERIFY` to "false" only if you have self-signed certificates.
 
+#### Mutual TLS (Client Certificate) Support
+
+For Server/Data Center deployments that require mutual TLS authentication, you can configure client certificates:
+
+```json
+{
+  "mcpServers": {
+    "mcp-atlassian": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "-e", "JIRA_URL",
+        "-e", "JIRA_PERSONAL_TOKEN",
+        "-e", "JIRA_CLIENT_CERT",
+        "-e", "JIRA_CLIENT_KEY",
+        "-v", "/path/to/certs:/certs:ro",
+        "ghcr.io/sooperset/mcp-atlassian:latest"
+      ],
+      "env": {
+        "JIRA_URL": "https://jira.your-company.com",
+        "JIRA_PERSONAL_TOKEN": "your_jira_pat",
+        "JIRA_CLIENT_CERT": "/certs/client-cert.pem",
+        "JIRA_CLIENT_KEY": "/certs/client-key.pem"
+      }
+    }
+  }
+}
+```
+
+**Environment Variables for Client Certificates:**
+- `JIRA_CLIENT_CERT`: Path to the client certificate file (PEM format)
+- `JIRA_CLIENT_KEY`: Path to the client key file (PEM format, optional if certificate contains the key)
+- `CONFLUENCE_CLIENT_CERT`: Path to the Confluence client certificate file
+- `CONFLUENCE_CLIENT_KEY`: Path to the Confluence client key file
+
+You can use either:
+1. **Separate files**: Provide both `CLIENT_CERT` and `CLIENT_KEY`
+2. **Combined PEM file**: Provide only `CLIENT_CERT` with both certificate and key in one file
+
 </details>
 
 <details>
@@ -803,7 +844,9 @@ The server provides two ways to control tool access:
     - For Cloud: Check your API tokens (not your account password)
     - For Server/Data Center: Verify your personal access token is valid and not expired
     - For older Confluence servers: Some older versions require basic authentication with `CONFLUENCE_USERNAME` and `CONFLUENCE_API_TOKEN` (where token is your password)
-- **SSL Certificate Issues**: If using Server/Data Center and encounter SSL errors, set `CONFLUENCE_SSL_VERIFY=false` or `JIRA_SSL_VERIFY=false`
+- **SSL Certificate Issues**: If using Server/Data Center and encounter SSL errors:
+  - For self-signed certificates: Set `CONFLUENCE_SSL_VERIFY=false` or `JIRA_SSL_VERIFY=false`
+  - For mutual TLS: Configure `JIRA_CLIENT_CERT`/`JIRA_CLIENT_KEY` or `CONFLUENCE_CLIENT_CERT`/`CONFLUENCE_CLIENT_KEY` environment variables with paths to your client certificate files
 - **Permission Errors**: Ensure your Atlassian account has sufficient permissions to access the spaces/projects
 - **Custom Headers Issues**: See the ["Debugging Custom Headers"](#debugging-custom-headers) section below to analyze and resolve issues with custom headers
 
