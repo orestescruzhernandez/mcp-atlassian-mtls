@@ -289,3 +289,48 @@ def test_init_no_proxies(monkeypatch):
     )
     client = JiraClient(config=config)
     assert mock_session.proxies == {}
+
+
+def test_init_with_client_certificate(monkeypatch):
+    """Test that JiraClient configures client certificate for mutual TLS."""
+    mock_jira = MagicMock()
+    mock_session = MagicMock()
+    mock_session.proxies = {}
+    mock_jira._session = mock_session
+    monkeypatch.setattr("mcp_atlassian.jira.client.Jira", lambda **kwargs: mock_jira)
+    monkeypatch.setattr(
+        "mcp_atlassian.jira.client.configure_ssl_verification", lambda **kwargs: None
+    )
+
+    # Test with separate cert and key files
+    config = JiraConfig(
+        url="https://jira.example.com",
+        auth_type="pat",
+        personal_token="test_token",
+        client_cert="/path/to/cert.pem",
+        client_key="/path/to/key.pem",
+    )
+    client = JiraClient(config=config)
+    assert mock_session.cert == ("/path/to/cert.pem", "/path/to/key.pem")
+
+
+def test_init_with_combined_client_certificate(monkeypatch):
+    """Test that JiraClient configures combined PEM file for mutual TLS."""
+    mock_jira = MagicMock()
+    mock_session = MagicMock()
+    mock_session.proxies = {}
+    mock_jira._session = mock_session
+    monkeypatch.setattr("mcp_atlassian.jira.client.Jira", lambda **kwargs: mock_jira)
+    monkeypatch.setattr(
+        "mcp_atlassian.jira.client.configure_ssl_verification", lambda **kwargs: None
+    )
+
+    # Test with combined PEM file (no separate key)
+    config = JiraConfig(
+        url="https://jira.example.com",
+        auth_type="pat",
+        personal_token="test_token",
+        client_cert="/path/to/combined.pem",
+    )
+    client = JiraClient(config=config)
+    assert mock_session.cert == "/path/to/combined.pem"

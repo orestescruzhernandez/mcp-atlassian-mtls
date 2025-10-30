@@ -30,6 +30,8 @@ class ConfluenceConfig:
     personal_token: str | None = None  # Personal access token (Server/DC)
     oauth_config: OAuthConfig | BYOAccessTokenOAuthConfig | None = None
     ssl_verify: bool = True  # Whether to verify SSL certificates
+    client_cert: str | None = None  # Path to client certificate file for mutual TLS
+    client_key: str | None = None  # Path to client key file for mutual TLS (optional if cert contains key)
     spaces_filter: str | None = None  # List of space keys to filter searches
     http_proxy: str | None = None  # HTTP proxy URL
     https_proxy: str | None = None  # HTTPS proxy URL
@@ -115,6 +117,10 @@ class ConfluenceConfig:
         # SSL verification (for Server/DC)
         ssl_verify = is_env_ssl_verify("CONFLUENCE_SSL_VERIFY")
 
+        # Client certificate for mutual TLS
+        client_cert = os.getenv("CONFLUENCE_CLIENT_CERT")
+        client_key = os.getenv("CONFLUENCE_CLIENT_KEY")
+
         # Get the spaces filter if provided
         spaces_filter = os.getenv("CONFLUENCE_SPACES_FILTER")
 
@@ -135,6 +141,8 @@ class ConfluenceConfig:
             personal_token=personal_token,
             oauth_config=oauth_config,
             ssl_verify=ssl_verify,
+            client_cert=client_cert,
+            client_key=client_key,
             spaces_filter=spaces_filter,
             http_proxy=http_proxy,
             https_proxy=https_proxy,

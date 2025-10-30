@@ -260,3 +260,62 @@ def test_init_no_proxies(monkeypatch):
     )
     client = ConfluenceClient(config=config)
     assert mock_session.proxies == {}
+
+
+def test_init_with_client_certificate(monkeypatch):
+    """Test that ConfluenceClient configures client certificate for mutual TLS."""
+    mock_confluence = MagicMock()
+    mock_session = MagicMock()
+    mock_session.proxies = {}
+    mock_confluence._session = mock_session
+    monkeypatch.setattr(
+        "mcp_atlassian.confluence.client.Confluence", lambda **kwargs: mock_confluence
+    )
+    monkeypatch.setattr(
+        "mcp_atlassian.confluence.client.configure_ssl_verification",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        "mcp_atlassian.preprocessing.confluence.ConfluencePreprocessor",
+        lambda **kwargs: MagicMock(),
+    )
+
+    # Test with separate cert and key files
+    config = ConfluenceConfig(
+        url="https://confluence.example.com",
+        auth_type="pat",
+        personal_token="test_token",
+        client_cert="/path/to/cert.pem",
+        client_key="/path/to/key.pem",
+    )
+    client = ConfluenceClient(config=config)
+    assert mock_session.cert == ("/path/to/cert.pem", "/path/to/key.pem")
+
+
+def test_init_with_combined_client_certificate(monkeypatch):
+    """Test that ConfluenceClient configures combined PEM file for mutual TLS."""
+    mock_confluence = MagicMock()
+    mock_session = MagicMock()
+    mock_session.proxies = {}
+    mock_confluence._session = mock_session
+    monkeypatch.setattr(
+        "mcp_atlassian.confluence.client.Confluence", lambda **kwargs: mock_confluence
+    )
+    monkeypatch.setattr(
+        "mcp_atlassian.confluence.client.configure_ssl_verification",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        "mcp_atlassian.preprocessing.confluence.ConfluencePreprocessor",
+        lambda **kwargs: MagicMock(),
+    )
+
+    # Test with combined PEM file (no separate key)
+    config = ConfluenceConfig(
+        url="https://confluence.example.com",
+        auth_type="pat",
+        personal_token="test_token",
+        client_cert="/path/to/combined.pem",
+    )
+    client = ConfluenceClient(config=config)
+    assert mock_session.cert == "/path/to/combined.pem"
