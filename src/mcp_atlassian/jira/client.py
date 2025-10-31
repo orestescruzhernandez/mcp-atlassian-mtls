@@ -110,6 +110,25 @@ class JiraClient:
             ssl_verify=self.config.ssl_verify,
         )
 
+        # Configure client certificate for mutual TLS if provided
+        if self.config.client_cert:
+            if self.config.client_key:
+                # Separate cert and key files
+                self.jira._session.cert = (self.config.client_cert, self.config.client_key)
+                log_config_param(
+                    logger, "Jira", "CLIENT_CERT", self.config.client_cert
+                )
+                log_config_param(
+                    logger, "Jira", "CLIENT_KEY", self.config.client_key, sensitive=True
+                )
+            else:
+                # Combined PEM file
+                self.jira._session.cert = self.config.client_cert
+                log_config_param(
+                    logger, "Jira", "CLIENT_CERT", self.config.client_cert
+                )
+            logger.info("Jira client certificate configured for mutual TLS")
+
         # Proxy configuration
         proxies = {}
         if self.config.http_proxy:
